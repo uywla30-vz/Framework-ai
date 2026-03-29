@@ -18,6 +18,9 @@ public:
 private:
     ModelConfig config; Eigen::VectorXd global_mu, global_sigma; Eigen::MatrixXd embedding;
     std::vector<TransformerBlock> blocks; std::map<std::pair<int, int>, Eigen::MatrixXd> phi_cache;
+    std::vector<std::vector<BasisGradients>> last_grads;
+    std::vector<Eigen::MatrixXd> block_activations;
+    Eigen::MatrixXd last_x_emb;
     void precompute_phis();
 };
 }
