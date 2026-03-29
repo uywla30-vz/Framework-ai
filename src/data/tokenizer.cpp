@@ -18,7 +18,7 @@ void Tokenizer::train(const std::string& cp, int tvs) {
         std::map<std::pair<int,int>,int> pc; for(size_t i=0;i+1<t.size();++i) pc[{t[i],t[i+1]}]++;
         if(pc.empty())break;
         auto bp=std::max_element(pc.begin(),pc.end(),[](const auto& a,const auto& b){return a.second<b.second;});
-        if(bp->second<2)break;
+        if(bp->second < 2)break;
         merges[bp->first]=nid; std::vector<uint8_t> nt=id_to_token[bp->first.first];
         nt.insert(nt.end(),id_to_token[bp->first.second].begin(),id_to_token[bp->first.second].end());
         id_to_token[nid]=nt; token_to_id[nt]=nid;

@@ -13,6 +13,8 @@ public:
     void backward(const Eigen::MatrixXd& dL);
     void update_params(double lr);
     int get_K() const { return config.K; }
+    void save(const std::string& p);
+    void load(const std::string& p);
 private:
     ModelConfig config; Eigen::VectorXd global_mu, global_sigma; Eigen::MatrixXd embedding;
     std::vector<TransformerBlock> blocks; std::map<std::pair<int, int>, Eigen::MatrixXd> phi_cache;

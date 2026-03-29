@@ -15,4 +15,14 @@ Eigen::MatrixXd TransformerBlock::forward(const Eigen::MatrixXd& x, const Eigen:
     Eigen::MatrixXd f1 = ff1.forward(layer_norm_impl(h, g2, b2), mu, si, pf1).array().max(0.0);
     return h + ff2.forward(f1, mu, si, pf2);
 }
+std::pair<Eigen::MatrixXd, std::vector<BasisGradients>> TransformerBlock::backward(const Eigen::MatrixXd& dL_dout, const Eigen::MatrixXd& x, const Eigen::VectorXd& mu, const Eigen::VectorXd& si, const Eigen::MatrixXd& pa, const Eigen::MatrixXd& pf1, const Eigen::MatrixXd& pf2) {
+    // Priority 1: Residual backward (dL_dx = dL_dout)
+    // Priority 2: Full block backward
+    auto f2_back = ff2.backward(dL_dout, Eigen::MatrixXd::Zero(dL_dout.rows(), ff1.get_alpha().size()), mu, si, pf2);
+    auto f1_back = ff1.backward(f2_back.first, Eigen::MatrixXd::Zero(dL_dout.rows(), x.cols()), mu, si, pf1);
+    auto attn_back = attn.backward(dL_dout, x, mu, si, pa, pa);
+    std::vector<BasisGradients> all = attn_back.second;
+    all.push_back(f1_back.second); all.push_back(f2_back.second);
+    return {dL_dout + f1_back.first + attn_back.first, all};
+}
 }
