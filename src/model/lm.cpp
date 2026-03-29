@@ -18,6 +18,17 @@ Eigen::MatrixXd LanguageModel::forward(const std::vector<std::vector<int>>& x) {
     for (auto& b : blocks) h = b.forward(h, global_mu, global_sigma, pa, pf1, pf2);
     return h * embedding.transpose();
 }
-void LanguageModel::backward(const Eigen::MatrixXd& dL) {}
+void LanguageModel::backward(const Eigen::MatrixXd& dL) {
+    Eigen::VectorXd d_mu = Eigen::VectorXd::Zero(config.K);
+    Eigen::VectorXd d_sigma = Eigen::VectorXd::Zero(config.K);
+    auto& pa = phi_cache.at({config.d_model, config.d_model}); auto& pf1 = phi_cache.at({config.d_model, config.d_ff}); auto& pf2 = phi_cache.at({config.d_ff, config.d_model});
+    // Iterate blocks backwards and accumulate global grads
+    for (auto it = blocks.rbegin(); it != blocks.rend(); ++it) {
+        // auto b_grads = it->backward(dL, ...);
+        // d_mu += b_grads.d_mu; d_sigma += b_grads.d_sigma;
+    }
+}
 void LanguageModel::update_params(double lr) {}
+void LanguageModel::save(const std::string& p) {}
+void LanguageModel::load(const std::string& p) {}
 }
