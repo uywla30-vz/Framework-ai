@@ -21,3 +21,16 @@ add_executable(hwsb_lm
     src/training/adam.cpp
     src/training/trainer.cpp
 )
+
+add_executable(hwsb_train
+    src/train.cpp
+    src/model/basis.cpp
+    src/model/layer.cpp
+    src/model/attention.cpp
+    src/model/transformer.cpp
+    src/model/lm.cpp
+    src/data/tokenizer.cpp
+    src/data/dataset.cpp
+    src/training/adam.cpp
+    src/training/trainer.cpp
+)
