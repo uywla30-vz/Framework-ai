@@ -27,8 +27,23 @@ src/data/dataset.cpp src/training/adam.cpp src/training/trainer.cpp \
 ```
 
 ## Usage
-1. **Prepare Data**: Use the `scripts/prepare_data.py` (to be implemented) or provide a raw text corpus for the tokenizer.
-2. **Run Inference**:
+1. **Prepare Data**: Use the `scripts/prepare_data.py` to generate a sample corpus and binary data for training.
+```bash
+python3 scripts/prepare_data.py
+```
+2. **Train Model**: Run the training utility to train the model on the generated `corpus.bin`.
+```bash
+# Compile
+g++ -std=c++17 -O3 -Ithird_party -Isrc/model -Isrc/data -Isrc/training \
+src/train.cpp src/model/basis.cpp src/model/layer.cpp src/model/attention.cpp \
+src/model/transformer.cpp src/model/lm.cpp src/data/tokenizer.cpp \
+src/data/dataset.cpp src/training/adam.cpp src/training/trainer.cpp \
+-o hwsb_train
+
+# Run training
+./hwsb_train
+```
+3. **Run Inference**:
 ```bash
 ./hwsb_lm
 > Enter your prompt: Hello world
