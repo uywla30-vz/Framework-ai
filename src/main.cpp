@@ -15,7 +15,8 @@ int sample(const Eigen::VectorXd& l, double t, double p) {
     static std::mt19937 g(42); std::discrete_distribution<> d(tp.data(), tp.data()+tp.size()); return ti[d(g)];
 }
 int main() {
-    ModelConfig c; LanguageModel m(c); Tokenizer t; std::string p;
+    ModelConfig c; c.vocab_size = 256; LanguageModel m(c); Tokenizer t; std::string p;
+    m.load("model.bin");
     std::cout << "HWS-B LM v0.1 Ready" << std::endl;
     while (std::cout << "> " << std::flush && std::getline(std::cin, p) && p != "exit") {
         if(p.empty()) continue;

@@ -1,5 +1,6 @@
 #include "lm.h"
 #include <iostream>
+#include <fstream>
 namespace hwsb {
 LanguageModel::LanguageModel(const ModelConfig& c) : config(c) {
     global_mu = Eigen::VectorXd::Random(c.K); global_sigma = Eigen::VectorXd::Random(c.K).array().abs()+0.1;
@@ -14,21 +15,40 @@ void LanguageModel::precompute_phis() {
 Eigen::MatrixXd LanguageModel::forward(const std::vector<std::vector<int>>& x) {
     int bs = (int)x.size(), sl = (int)x[0].size(); Eigen::MatrixXd h(bs*sl, config.d_model);
     for (int b=0; b<bs; ++b) for (int i=0; i<sl; ++i) h.row(b*sl+i) = embedding.row(x[b][i]);
+    last_x_emb = h; block_activations.clear();
     auto& pa = phi_cache.at({config.d_model, config.d_model}); auto& pf1 = phi_cache.at({config.d_model, config.d_ff}); auto& pf2 = phi_cache.at({config.d_ff, config.d_model});
-    for (auto& b : blocks) h = b.forward(h, global_mu, global_sigma, pa, pf1, pf2);
+    for (auto& b : blocks) { block_activations.push_back(h); h = b.forward(h, global_mu, global_sigma, pa, pf1, pf2); }
+    block_activations.push_back(h); // Save the final hidden state
     return h * embedding.transpose();
 }
 void LanguageModel::backward(const Eigen::MatrixXd& dL) {
-    Eigen::VectorXd d_mu = Eigen::VectorXd::Zero(config.K);
-    Eigen::VectorXd d_sigma = Eigen::VectorXd::Zero(config.K);
     auto& pa = phi_cache.at({config.d_model, config.d_model}); auto& pf1 = phi_cache.at({config.d_model, config.d_ff}); auto& pf2 = phi_cache.at({config.d_ff, config.d_model});
-    // Iterate blocks backwards and accumulate global grads
-    for (auto it = blocks.rbegin(); it != blocks.rend(); ++it) {
-        // auto b_grads = it->backward(dL, ...);
-        // d_mu += b_grads.d_mu; d_sigma += b_grads.d_sigma;
+    Eigen::MatrixXd dh = dL * embedding;
+    last_grads.clear();
+    for (int i = (int)blocks.size() - 1; i >= 0; --i) {
+        auto b_back = blocks[i].backward(dh, block_activations[i], global_mu, global_sigma, pa, pf1, pf2);
+        dh = b_back.first; last_grads.push_back(b_back.second);
     }
+    std::reverse(last_grads.begin(), last_grads.end());
+    // Update embedding gradients
+    embedding.array() -= 0.001 * (dL.transpose() * block_activations.back()).array();
 }
-void LanguageModel::update_params(double lr) {}
-void LanguageModel::save(const std::string& p) {}
-void LanguageModel::load(const std::string& p) {}
+void LanguageModel::update_params(double lr) {
+    if (last_grads.empty()) return;
+    for (size_t i=0; i<blocks.size(); ++i) blocks[i].update_params(last_grads[i], lr);
+}
+void LanguageModel::save(const std::string& p) {
+    std::ofstream os(p, std::ios::binary); if (!os) return;
+    os.write((char*)global_mu.data(), config.K * sizeof(double));
+    os.write((char*)global_sigma.data(), config.K * sizeof(double));
+    os.write((char*)embedding.data(), config.vocab_size * config.d_model * sizeof(double));
+    for (auto& b : blocks) b.save(os);
+}
+void LanguageModel::load(const std::string& p) {
+    std::ifstream is(p, std::ios::binary); if (!is) return;
+    is.read((char*)global_mu.data(), config.K * sizeof(double));
+    is.read((char*)global_sigma.data(), config.K * sizeof(double));
+    is.read((char*)embedding.data(), config.vocab_size * config.d_model * sizeof(double));
+    for (auto& b : blocks) b.load(is);
+}
 }

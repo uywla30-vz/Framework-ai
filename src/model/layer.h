@@ -13,9 +13,14 @@ public:
     Eigen::VectorXd& get_beta() { return beta; }
     Eigen::VectorXd& get_gamma() { return gamma; }
     Eigen::VectorXd& get_bias() { return bias; }
+    void update_params(const BasisGradients& g, double lr);
+    void save(std::ostream& os);
+    void load(std::istream& is);
 private:
     int I, J, K;
     Eigen::VectorXd alpha, beta, gamma, bias;
+    Eigen::VectorXd m_alpha, v_alpha, m_beta, v_beta, m_gamma, v_gamma, m_bias, v_bias;
+    int t = 0;
 };
 }
 #endif
