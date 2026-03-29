@@ -6,8 +6,8 @@ TransformerBlock::TransformerBlock(int dm, int nh, int dff, int K) : attn(dm, nh
 Eigen::MatrixXd layer_norm_impl(const Eigen::MatrixXd& x, const Eigen::VectorXd& g, const Eigen::VectorXd& b) {
     Eigen::VectorXd m = x.rowwise().mean();
     Eigen::VectorXd v = (x.rowwise().squaredNorm().array() / x.cols()) - m.array().square();
-    Eigen::MatrixXd n = (x.colwise() - m).array().rowwise() / (v.array() + 1e-6).sqrt();
-    for(int i=0; i<n.rows(); ++i) n.row(i) = n.row(i).array() * g.transpose().array() + b.transpose().array();
+    Eigen::MatrixXd n = (x.colwise() - m).array().colwise() / (v.array() + 1e-6).sqrt();
+    n = (n.array().rowwise() * g.transpose().array()).rowwise() + b.transpose().array();
     return n;
 }
 Eigen::MatrixXd TransformerBlock::forward(const Eigen::MatrixXd& x, const Eigen::VectorXd& mu, const Eigen::VectorXd& si, const Eigen::MatrixXd& pa, const Eigen::MatrixXd& pf1, const Eigen::MatrixXd& pf2) {

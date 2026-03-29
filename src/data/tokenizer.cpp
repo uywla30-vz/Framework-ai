@@ -37,7 +37,7 @@ std::vector<int> Tokenizer::encode(const std::string& txt) const {
             auto it=merges.find({t[i],t[i+1]}); if(it!=merges.end()&&it->second<mid){mid=it->second;bp=it->first;m=true;}
         }
         if(m){ std::vector<int> nts; for(size_t i=0;i<t.size();++i){
-            if(i+1<t.size()&&t[i]==bp->first&&t[i+1]==bp->second){nts.push_back(mid);i++;}
+            if(i+1<t.size()&&t[i]==bp.first&&t[i+1]==bp.second){nts.push_back(mid);i++;}
             else nts.push_back(t[i]);
         } t=std::move(nts); }
     } return t;
